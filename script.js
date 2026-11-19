@@ -6,7 +6,7 @@ const panel=document.getElementById('panel'),txt=document.getElementById('txt'),
 let W=0,H=0,DPR=1,worldH=0,scrollY=0,userScrolled=false;
 let nuts=[],birds=[],crumbs=[],live=new Set(),dirty=[],fullDirty=true;
 let appearing=false,appearT=0,appearDur=1,appearIdx=0;
-let started=false,lastText='',pendingText=null,birdScale=1,elapsed=0,spawnTimer=0,phase='idle',total=0,alive=0,speed=1,capB=25,maxR=10;
+let fontScale=1,started=false,lastText='',pendingText=null,birdScale=1,elapsed=0,spawnTimer=0,phase='idle',total=0,alive=0,speed=1,capB=25,maxR=10;
 
 /* ---------- 바닥 타일 (세로로 이어 붙임) ---------- */
 const TILE=512,bg=document.createElement('canvas');
@@ -85,13 +85,26 @@ function forNutsIn(x0,y0,x1,y1,cb){
   }
 }
 function buildChunks(){
-  const need=W>0?Math.ceil(worldH/CH):0;chunks=[];
-  for(let i=0;i<need;i++){const c=document.createElement('canvas');c.width=Math.round(W*DPR);c.height=CH*DPR;chunks.push(c)}
-  fullDirty=true;
+  const need=W>0?Math.ceil(worldH/CH):0;chunks=new Array(need).fill(null);dirty=[];fullDirty=false;
+}
+const MAX_CHUNKS=12;
+function getChunk(ci){
+  if(!chunks[ci]){
+    const c=document.createElement('canvas');c.width=Math.round(W*DPR);c.height=CH*DPR;chunks[ci]=c;
+    paintRect(-50,ci*CH,W+50,(ci+1)*CH);
+  }
+  return chunks[ci];
+}
+function evictChunks(){
+  const made=[];for(let i=0;i<chunks.length;i++)if(chunks[i])made.push(i);
+  if(made.length<=MAX_CHUNKS)return;
+  const mid=(scrollY+H/2)/CH;made.sort((a,b)=>Math.abs(b-mid)-Math.abs(a-mid));
+  for(let k=0;k<made.length-MAX_CHUNKS;k++)chunks[made[k]]=null;
 }
 function paintRect(x0,y0,x1,y1){
   const c0=Math.max(0,Math.floor(y0/CH)),c1=Math.min(chunks.length-1,Math.floor(y1/CH));
   for(let ci=c0;ci<=c1;ci++){
+    if(!chunks[ci])continue;
     const g=chunks[ci].getContext('2d');g.save();g.setTransform(DPR,0,0,DPR,0,-ci*CH*DPR);
     g.beginPath();g.rect(x0,y0,x1-x0,y1-y0);g.clip();g.clearRect(x0,y0,x1-x0,y1-y0);
     forNutsIn(x0-maxR,y0-maxR,x1+maxR,y1+maxR,n=>{if(n.alive&&n.shown&&!n.live)drawNut(g,n,1,0)});
@@ -101,9 +114,7 @@ function paintRect(x0,y0,x1,y1){
 function markDirty(n){const r=maxR+3;dirty.push([n.x-r,n.y-r,n.x+r,n.y+r])}
 function setLive(n,v){if(n.live===v)return;n.live=v;if(v)live.add(n);else live.delete(n);markDirty(n)}
 function flushDirty(){
-  if(fullDirty){fullDirty=false;dirty=[];
-    for(let ci=0;ci<chunks.length;ci++){const g=chunks[ci].getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,chunks[ci].width,chunks[ci].height)}
-    paintRect(-50,0,W+50,worldH);return}
+  if(fullDirty){fullDirty=false;dirty=[];chunks.fill(null);return}
   for(const d of dirty)paintRect(d[0],d[1],d[2],d[3]);dirty=[];
 }
 
@@ -132,31 +143,38 @@ function wrap(o,text,maxW){
 const ready=()=>W>=80&&H>=120;
 function writeText(text){
   text=text.replace(/\r/g,'').trim();if(!text)return;
-  lastText=text;if(!ready()){pendingText=text;return}pendingText=null;
+  lastText=text;if(window.__fillOrig)window.__fillOrig();if(!ready()){pendingText=text;return}pendingText=null;
   const meas=document.createElement('canvas').getContext('2d');
-  const maxW=W*.88,usableH=H-170,minSize=W<600?34:46;
+  const panelTop=Math.min(H-110,panel.getBoundingClientRect().top||H-140);
+  const maxW=W*.88,usableH=panelTop-90,minSize=W<600?34:46;
   let size=Math.min(240,H*.42),lines;
   for(;;size*=.94){
     if(size<minSize)size=minSize;
     meas.font=FONT(size);lines=wrap(meas,text,maxW);
     if(lines.length*size*1.2<=usableH||size===minSize)break;
   }
+  // 지금 맞춘 크기를 100%로 보고 50~200% 배율 적용
+  if(fontScale!==1){size*=fontScale;meas.font=FONT(size);lines=wrap(meas,text,maxW)}
   const lh=size*1.2,contentH=lines.length*lh;
   let top;
   if(contentH<=usableH){worldH=H;top=70+(usableH-contentH)/2+lh/2}
-  else{top=80+lh/2;worldH=Math.ceil(top+contentH+150)}
-  const off=document.createElement('canvas');off.width=W;off.height=worldH;
+  else{top=80+lh/2;worldH=Math.ceil(top+contentH+(H-panelTop)+40)}
+  // 촘촘한 육각 배치. 아주 긴 글도 되도록 2048px 띠로 나눠 그리고 읽음
+  const step=Math.max(3.6,Math.min(14,size/12)),rh=step*.87,pts=[],BAND=2048;
+  const off=document.createElement('canvas');off.width=W;
   const o=off.getContext('2d',{willReadFrequently:true});
-  o.font=FONT(size);o.textAlign='center';o.textBaseline='middle';o.fillStyle='#000';
-  lines.forEach((l,i)=>o.fillText(l,W/2,top+i*lh));
-  const data=o.getImageData(0,0,W,worldH).data;
-  // 촘촘한 육각 배치: 글자 크기의 1/10 간격, 견과가 서로 살짝 겹치도록
-  const step=Math.max(3.6,Math.min(14,size/12)),rh=step*.87,pts=[];
-  for(let y=rh/2,row=0;y<worldH;y+=rh,row++)for(let x=(row%2)*step/2;x<W;x+=step){
-    if(data[((y|0)*W+(x|0))*4+3]>110)pts.push([x+R(-.12,.12)*step,y+R(-.12,.12)*step]);
+  for(let by=0;by<worldH;by+=BAND){
+    const bh=Math.min(BAND,worldH-by);off.height=bh;
+    o.font=FONT(size);o.textAlign='center';o.textBaseline='middle';o.fillStyle='#000';o.clearRect(0,0,W,bh);
+    lines.forEach((l,i)=>{const y=top+i*lh;if(y>by-lh&&y<by+bh+lh)o.fillText(l,W/2,y-by)});
+    const data=o.getImageData(0,0,W,bh).data;
+    for(let row=Math.max(0,Math.ceil((by-rh/2)/rh));;row++){
+      const y=rh/2+row*rh;if(y>=by+bh)break;const yi=(y-by)|0;
+      for(let x=(row%2)*step/2;x<W;x+=step)if(data[(yi*W+(x|0))*4+3]>110)pts.push([x+R(-.12,.12)*step,y+R(-.12,.12)*step]);
+    }
   }
   pts.sort((a,b)=>(Math.round((a[1]-top)/lh)-Math.round((b[1]-top)/lh))||(a[0]-b[0]));
-  appearDur=Math.min(9,.6+pts.length*.0005);
+  appearDur=Math.min(10,.6+pts.length*.0004);
   birds.forEach(b=>flyAway(b,b.dir));
   maxR=step*1.9*.62;
   nuts=pts.map((p,i)=>({x:p[0],y:p[1],type:randNut(),rot:R(0,TAU),size:step*R(1.6,1.9),
@@ -311,7 +329,8 @@ function render(){
   flushDirty();
   ctx.setTransform(DPR,0,0,DPR,0,0);
   for(let y=-(scrollY%TILE);y<H;y+=TILE)ctx.drawImage(bg,0,y,W,TILE);
-  for(let ci=Math.floor(scrollY/CH);ci<chunks.length&&ci*CH<scrollY+H;ci++)ctx.drawImage(chunks[ci],0,ci*CH-scrollY,W,CH);
+  for(let ci=Math.max(0,Math.floor(scrollY/CH));ci<chunks.length&&ci*CH<scrollY+H;ci++)ctx.drawImage(getChunk(ci),0,ci*CH-scrollY,W,CH);
+  evictChunks();
   ctx.translate(0,-scrollY);
   const y0=scrollY-80,y1=scrollY+H+80;
   for(const n of live){if(n.y<y0||n.y>y1)continue;
@@ -373,9 +392,13 @@ addEventListener('keydown',e=>{if(document.activeElement===txt)return;
   if(e.key==='ArrowUp'||e.key==='PageUp'){scrollY-=e.key==='PageUp'?H*.8:60;userScrolled=true;clampScroll()}});
 panel.addEventListener('submit',e=>{e.preventDefault();const v=txt.value;if(v.trim()){writeText(v);txt.value='';onInput();txt.blur()}});
 txt.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();panel.requestSubmit()}});
-function onInput(){cnt.textContent=`${txt.value.length} / 1000`;txt.style.height='52px';txt.style.height=Math.min(150,Math.max(52,txt.scrollHeight))+'px'}
+function onInput(){cnt.textContent=`${txt.value.length} / 2000`;txt.style.height='52px';txt.style.height=Math.min(150,Math.max(52,txt.scrollHeight))+'px'}
 txt.addEventListener('input',onInput);
 spd.addEventListener('change',()=>speed=+spd.value);
+const fsz=document.getElementById('fsz'),fszV=document.getElementById('fszV');
+function setScale(pct){pct=Math.max(50,Math.min(200,Math.round(pct/10)*10||100));fontScale=pct/100;fsz.value=pct;fszV.textContent=pct+'%'}
+fsz.addEventListener('input',()=>fszV.textContent=fsz.value+'%');
+fsz.addEventListener('change',()=>{setScale(+fsz.value);if(lastText)writeText(lastText)});
 
 /* ---------- 시작 / 공유 ---------- */
 const startTip=document.getElementById('startTip'),startFrom=document.getElementById('startFrom');
@@ -396,21 +419,42 @@ async function decodeText(code){
   return new TextDecoder().decode(kind==='z'?await pipe(bytes,new DecompressionStream('deflate-raw')):bytes);
 }
 async function readShared(){
-  const m=location.hash.match(/^#t=([A-Za-z0-9_-]+)$/);if(!m)return null;
-  const t=(await decodeText(m[1])).slice(0,1000).trim();return t||null;
+  const m=location.hash.match(/^#t=([A-Za-z0-9_-]+)(?:&f=(\d+))?$/);if(!m)return null;
+  if(m[2])setScale(+m[2]);
+  const t=(await decodeText(m[1])).slice(0,2000).trim();return t||null;
 }
 async function openShare(){
   if(!lastText)return;
-  const url=location.href.split('#')[0]+'#t='+await encodeText(lastText);
+  const pct=Math.round(fontScale*100);
+  const url=location.href.split('#')[0]+'#t='+await encodeText(lastText)+(pct!==100?'&f='+pct:'');
   try{history.replaceState(null,'',url)}catch(e){}
   shareLink.value=url;shareNote.textContent='';
   nativeBtn.hidden=!navigator.share;
   shareBox.hidden=false;shareLink.focus();shareLink.select();
 }
 document.getElementById('shareBtn').addEventListener('click',openShare);
-document.getElementById('closeShare').addEventListener('click',()=>shareBox.hidden=true);
-shareBox.addEventListener('click',e=>{if(e.target===shareBox)shareBox.hidden=true});
-addEventListener('keydown',e=>{if(e.key==='Escape')shareBox.hidden=true});
+const origPanel=document.getElementById('origPanel'),origBtn=document.getElementById('origBtn'),origText=document.getElementById('origText'),origInfo=document.getElementById('origInfo'),origNote=document.getElementById('origNote');
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m||e.target.hasAttribute('data-close'))m.hidden=true});
+});
+addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal').forEach(m=>m.hidden=true);showOrig(false)}});
+function fillOrig(){
+  origText.textContent=lastText;
+  const left=total?Math.round(alive/total*100):100;
+  origInfo.textContent=`${[...lastText].length.toLocaleString()}자 · 새들이 ${100-left}% 먹었어요 ·`;
+}
+function showOrig(v){
+  if(v&&!lastText)return;
+  origPanel.hidden=!v;origBtn.classList.toggle('on',v);origBtn.textContent=v?'🥜 견과류':'📜 원문';
+  if(v){origNote.textContent='';fillOrig()}
+}
+origBtn.addEventListener('click',()=>showOrig(origPanel.hidden));
+window.__fillOrig=()=>{if(!origPanel.hidden)setTimeout(fillOrig,0)};
+setInterval(()=>{if(!origPanel.hidden)fillOrig()},1000);
+document.getElementById('origCopy').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(lastText);origNote.textContent='복사했어요!'}
+  catch(e){const r=document.createRange();r.selectNodeContents(origText);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);origNote.textContent='선택된 글을 Ctrl+C로 복사해 주세요'}
+});
 document.getElementById('copyBtn').addEventListener('click',async()=>{
   try{await navigator.clipboard.writeText(shareLink.value);shareNote.textContent='링크를 복사했어요!'}
   catch(e){shareLink.select();shareNote.textContent='복사가 막혀 있어요. 위 링크를 직접 복사해 주세요 (Ctrl+C).'}

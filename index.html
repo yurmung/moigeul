@@ -15,7 +15,11 @@
 <div id="scrollHint">↕ 스크롤하면 아래 글도 볼 수 있어요</div>
 <div id="msg"></div>
 <div id="startTip"><span id="startFrom"></span>👆 화면을 누르면 새들이 날아와요</div>
-<div id="shareBox" hidden>
+<div id="origPanel" hidden>
+  <div id="origText"></div>
+  <div class="foot"><span id="origInfo"></span><button type="button" id="origCopy" class="link">복사</button><span id="origNote"></span></div>
+</div>
+<div id="shareBox" class="modal" hidden>
   <div class="card" role="dialog" aria-labelledby="shareTitle">
     <h2 id="shareTitle">내 글 공유하기</h2>
     <p>이 링크를 받은 사람은 같은 글이 견과류로 놓인 화면에서 시작해요.</p>
@@ -26,17 +30,18 @@
       <button type="button" id="imgBtn" class="sub">지금 화면 이미지 저장</button>
     </div>
     <span id="shareNote"></span>
-    <button type="button" id="closeShare" class="x" aria-label="닫기">✕</button>
+    <button type="button" id="closeShare" class="x" data-close aria-label="닫기">✕</button>
   </div>
 </div>
 <form id="panel" autocomplete="off">
   <div class="tw">
-    <textarea id="txt" placeholder="여기에 글을 써 보세요… (Enter로 쓰기, Shift+Enter 줄바꿈)" maxlength="1000"></textarea>
-    <span id="cnt">0 / 1000</span>
+    <textarea id="txt" placeholder="여기에 글을 써 보세요… (Enter로 쓰기, Shift+Enter 줄바꿈)" maxlength="2000"></textarea>
+    <span id="cnt">0 / 2000</span>
   </div>
   <div class="ctrls">
     <button type="submit">견과류로 쓰기</button>
-    <button type="button" id="shareBtn" class="sub">🔗 공유</button>
+    <div class="pair"><button type="button" id="origBtn" class="sub">📜 원문</button><button type="button" id="shareBtn" class="sub">🔗 공유</button></div>
+    <label>글씨 <input type="range" id="fsz" min="50" max="200" step="10" value="100"><b id="fszV">100%</b></label>
     <label>시간 <select id="spd"><option value="0.5">0.5배</option><option value="1" selected>1배</option><option value="2">2배</option><option value="4">4배</option><option value="8">8배</option></select></label>
   </div>
 </form>

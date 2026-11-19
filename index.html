@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>모이글 — 새들이 쪼아먹는 글</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<header><h1>🥜 모이글</h1><p>견과류로 쓴 글을 새들이 조금씩 쪼아먹어요 · 누르면 새가 달아나요</p></header>
+<div id="hud"><span id="hudT"></span><div id="bar"><i></i></div></div>
+<div id="scrollHint">↕ 스크롤하면 아래 글도 볼 수 있어요</div>
+<div id="msg"></div>
+<div id="startTip"><span id="startFrom"></span>👆 화면을 누르면 새들이 날아와요</div>
+<div id="shareBox" hidden>
+  <div class="card" role="dialog" aria-labelledby="shareTitle">
+    <h2 id="shareTitle">내 글 공유하기</h2>
+    <p>이 링크를 받은 사람은 같은 글이 견과류로 놓인 화면에서 시작해요.</p>
+    <input id="shareLink" readonly>
+    <div class="row">
+      <button type="button" id="copyBtn">링크 복사</button>
+      <button type="button" id="nativeBtn" class="sub" hidden>다른 앱으로 보내기</button>
+      <button type="button" id="imgBtn" class="sub">지금 화면 이미지 저장</button>
+    </div>
+    <span id="shareNote"></span>
+    <button type="button" id="closeShare" class="x" aria-label="닫기">✕</button>
+  </div>
+</div>
+<form id="panel" autocomplete="off">
+  <div class="tw">
+    <textarea id="txt" placeholder="여기에 글을 써 보세요… (Enter로 쓰기, Shift+Enter 줄바꿈)" maxlength="1000"></textarea>
+    <span id="cnt">0 / 1000</span>
+  </div>
+  <div class="ctrls">
+    <button type="submit">견과류로 쓰기</button>
+    <button type="button" id="shareBtn" class="sub">🔗 공유</button>
+    <label>시간 <select id="spd"><option value="0.5">0.5배</option><option value="1" selected>1배</option><option value="2">2배</option><option value="4">4배</option><option value="8">8배</option></select></label>
+  </div>
+</form>
+<script src="script.js"></script>
+</body>
+</html>

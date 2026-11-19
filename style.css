@@ -1,0 +1,44 @@
+:root{--ink:#3b2a1a;--paper:rgba(255,251,243,.9)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#f3eadb;font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink)}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:pointer;touch-action:none}
+header{position:fixed;top:14px;left:18px;pointer-events:none;background:rgba(243,234,219,.75);padding:6px 10px;border-radius:10px}
+h1{margin:0;font-size:19px;letter-spacing:-.02em;font-weight:900}
+header p{margin:2px 0 0;font-size:12.5px;opacity:.72}
+#hud{position:fixed;top:14px;right:18px;font-size:13px;text-align:right;line-height:1.6;font-variant-numeric:tabular-nums;pointer-events:none;background:rgba(243,234,219,.75);padding:6px 10px;border-radius:10px}
+#bar{margin-top:4px;width:150px;height:5px;border-radius:3px;background:rgba(80,50,20,.15);overflow:hidden;margin-left:auto}
+#bar i{display:block;height:100%;width:100%;background:#8a5a2f;transition:width .3s}
+#scrollHint{position:fixed;right:18px;bottom:110px;font-size:12.5px;background:rgba(59,42,26,.78);color:#fff8ec;padding:6px 10px;border-radius:10px;pointer-events:none;opacity:0;transition:opacity .4s}
+#scrollHint.show{opacity:1}
+#panel{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:min(720px,calc(100% - 24px));background:var(--paper);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 8px 30px rgba(60,40,20,.18);padding:12px;display:flex;gap:10px;align-items:flex-end;transition:opacity .5s}
+#panel.dim{opacity:.3}
+#panel.dim:hover,#panel.dim:focus-within{opacity:1}
+.tw{flex:1;display:flex;flex-direction:column}
+textarea{resize:none;border:none;background:transparent;font:inherit;font-size:16px;line-height:1.5;color:var(--ink);outline:none;height:52px;max-height:150px;padding:4px 6px}
+textarea::placeholder{color:rgba(59,42,26,.45)}
+#cnt{font-size:11.5px;opacity:.55;padding-left:6px;font-variant-numeric:tabular-nums}
+.ctrls{display:flex;flex-direction:column;gap:6px}
+button{border:none;border-radius:12px;background:#7a4a24;color:#fff8ec;font:inherit;font-weight:700;font-size:15px;padding:9px 16px;cursor:pointer;white-space:nowrap}
+button:hover{background:#8c5a2f}
+label{font-size:12px;display:flex;align-items:center;gap:6px;justify-content:space-between;opacity:.8}
+select{border:1px solid rgba(60,40,20,.2);border-radius:8px;background:#fffaf0;font:inherit;font-size:12px;padding:3px 4px;color:var(--ink)}
+#msg{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font-size:clamp(18px,3vw,28px);font-weight:700;text-align:center;opacity:0;transition:opacity 1.4s;pointer-events:none;line-height:1.6;width:90%}
+#msg small{display:block;font-size:.6em;font-weight:400;opacity:.75}
+#msg.show{opacity:.85}
+@media (max-width:560px){header p{display:none}}
+#startTip{position:fixed;left:50%;top:84px;transform:translateX(-50%);background:rgba(59,42,26,.85);color:#fff8ec;font-size:15px;font-weight:700;padding:10px 18px;border-radius:999px;pointer-events:none;text-align:center;animation:bob 1.6s ease-in-out infinite;transition:opacity .5s}
+#startTip.hide{opacity:0;animation:none}
+#startFrom{display:block;font-size:12px;font-weight:400;opacity:.8}
+#startFrom:empty{display:none}
+@keyframes bob{50%{transform:translate(-50%,-6px)}}
+button.sub{background:#efe2cc;color:var(--ink);font-size:13.5px;padding:7px 12px}
+button.sub:hover{background:#e6d4b6}
+#shareBox{position:fixed;inset:0;background:rgba(40,25,10,.35);display:flex;align-items:center;justify-content:center;z-index:10;padding:16px}
+#shareBox[hidden]{display:none}
+#shareBox .card{position:relative;background:#fffaf1;border-radius:18px;padding:22px;width:min(460px,100%);box-shadow:0 20px 50px rgba(40,25,10,.3)}
+#shareBox h2{margin:0 0 6px;font-size:18px}
+#shareBox p{margin:0 0 12px;font-size:13.5px;opacity:.75;line-height:1.5}
+#shareLink{width:100%;border:1px solid rgba(60,40,20,.2);border-radius:10px;padding:9px 10px;font:inherit;font-size:13px;background:#fff;color:var(--ink)}
+#shareBox .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#shareNote{display:block;margin-top:10px;font-size:12.5px;min-height:1em;color:#7a4a24}
+#shareBox .x{position:absolute;top:10px;right:10px;background:none;color:var(--ink);font-size:16px;padding:6px 10px}

@@ -474,11 +474,16 @@ document.getElementById('imgBtn').addEventListener('click',()=>{
     shareNote.textContent='이미지를 저장했어요. (미리보기 창 안에서는 저장이 막힐 수 있어요)';
   },'image/png');
 });
-addEventListener('hashchange',async()=>{const t=await readShared().catch(()=>null);if(t&&t!==lastText){startFrom.textContent='누군가 남긴 글이에요';writeText(t)}});
+addEventListener('hashchange',async()=>{const t=await readShared().catch(()=>null);if(t&&t!==lastText){enterShared();writeText(t)}});
+
+// 공유받은 글: 쓰기 칸을 숨기고 원래 사이트로 가는 버튼만 보여줌
+function enterShared(){document.body.classList.add('shared');startFrom.textContent='누군가 남긴 글이에요'}
+document.getElementById('homeBtn').addEventListener('click',()=>{location.assign(location.href.split('#')[0])});
+panel.addEventListener('submit',e=>{if(document.body.classList.contains('shared'))e.stopImmediatePropagation()},true);
 
 resize();
 const start=async()=>{let t=null;try{t=await readShared()}catch(e){}
-  if(t){startFrom.textContent='누군가 남긴 글이에요';}
+  if(t)enterShared();
   writeText(t||'안녕, 새들아');requestAnimationFrame(t=>{last=t;frame(t)})};
 (document.fonts&&document.fonts.load)?Promise.race([document.fonts.load(FONT(100),'안녕가'),new Promise(r=>setTimeout(r,1500))]).then(start,start):start();
 })();

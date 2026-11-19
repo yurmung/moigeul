@@ -34,12 +34,17 @@
   </div>
 </div>
 <form id="panel" autocomplete="off">
+  <div class="sharedNote">
+    <b>누군가 남긴 글이에요</b>
+    <span>공유받은 글은 고칠 수 없어요. 내 글을 쓰려면 모이글로 가 보세요.</span>
+    <button type="button" id="homeBtn">✍️ 나도 글 쓰러 가기</button>
+  </div>
   <div class="tw">
     <textarea id="txt" placeholder="여기에 글을 써 보세요… (Enter로 쓰기, Shift+Enter 줄바꿈)" maxlength="2000"></textarea>
     <span id="cnt">0 / 2000</span>
   </div>
   <div class="ctrls">
-    <button type="submit">견과류로 쓰기</button>
+    <button type="submit" id="writeBtn">견과류로 쓰기</button>
     <div class="pair"><button type="button" id="origBtn" class="sub">📜 원문</button><button type="button" id="shareBtn" class="sub">🔗 공유</button></div>
     <label>글씨 <input type="range" id="fsz" min="50" max="200" step="10" value="100"><b id="fszV">100%</b></label>
     <label>시간 <select id="spd"><option value="0.5">0.5배</option><option value="1" selected>1배</option><option value="2">2배</option><option value="4">4배</option><option value="8">8배</option></select></label>

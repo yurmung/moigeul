@@ -54,3 +54,10 @@ button.on:hover{background:#8c5a2f}
 @keyframes fadeIn{from{opacity:0;transform:translate(-50%,calc(-50% - 6px))}}
 #fsz{width:84px;accent-color:#7a4a24;margin:0}
 #fszV{font-size:11.5px;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+.sharedNote{display:none;flex:1;flex-direction:column;align-items:flex-start;gap:4px;padding:2px 6px}
+.sharedNote b{font-size:15px}
+.sharedNote span{font-size:12.5px;opacity:.7;line-height:1.4}
+.sharedNote button{margin-top:6px}
+body.shared .sharedNote{display:flex}
+body.shared .tw,body.shared #writeBtn{display:none}
+body.shared #panel.dim{opacity:1}

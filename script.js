@@ -145,8 +145,10 @@ function writeText(text){
   text=text.replace(/\r/g,'').trim();if(!text)return;
   lastText=text;if(window.__fillOrig)window.__fillOrig();if(!ready()){pendingText=text;return}pendingText=null;
   const meas=document.createElement('canvas').getContext('2d');
-  const panelTop=Math.min(H-110,panel.getBoundingClientRect().top||H-140);
-  const maxW=W*.88,usableH=panelTop-90,minSize=W<600?34:46;
+  const narrow=isNarrow();
+  if(narrow&&!document.body.classList.contains('shared'))setFold(true);
+  const panelTop=Math.min(H-(narrow?70:110),panel.getBoundingClientRect().top||H-140);
+  const maxW=W*(W<600?.92:.88),usableH=Math.max(160,panelTop-(narrow?130:90)),minSize=W<600?30:46;
   let size=Math.min(240,H*.42),lines;
   for(;;size*=.94){
     if(size<minSize)size=minSize;
@@ -157,8 +159,8 @@ function writeText(text){
   if(fontScale!==1){size*=fontScale;meas.font=FONT(size);lines=wrap(meas,text,maxW)}
   const lh=size*1.2,contentH=lines.length*lh;
   let top;
-  if(contentH<=usableH){worldH=H;top=70+(usableH-contentH)/2+lh/2}
-  else{top=80+lh/2;worldH=Math.ceil(top+contentH+(H-panelTop)+40)}
+  if(contentH<=usableH){worldH=H;top=(narrow?118:70)+(usableH-contentH)/2+lh/2}
+  else{top=(narrow?118:80)+lh/2;worldH=Math.ceil(top+contentH+(H-panelTop)+40)}
   // 촘촘한 육각 배치. 아주 긴 글도 되도록 2048px 띠로 나눠 그리고 읽음
   const step=Math.max(3.6,Math.min(14,size/12)),rh=step*.87,pts=[],BAND=2048;
   const off=document.createElement('canvas');off.width=W;
@@ -369,7 +371,7 @@ function resize(){
   if(!ready())return;
   worldH=Math.max(worldH,H);buildChunks();clampScroll();
   if(pendingText)writeText(pendingText);
-  else if(lastText&&phase==='writing'&&alive===total&&(Math.abs(W-oW)>40||Math.abs(H-oH)>40))writeText(lastText);
+  else if(lastText&&phase==='writing'&&alive===total&&(Math.abs(W-oW)>40||(Math.abs(H-oH)>40&&document.activeElement!==txt&&!keyboardJustClosed())))writeText(lastText);
 }
 if(window.ResizeObserver)new ResizeObserver(()=>{if(innerWidth!==W||innerHeight!==H)resize()}).observe(document.documentElement);
 setInterval(()=>{if(innerWidth!==W||innerHeight!==H)resize()},500);
@@ -494,6 +496,14 @@ function closeNotice(){if(!noticeBox.hidden)noticeBox.hidden=true;try{localStora
 document.getElementById('noticeOk').addEventListener('click',closeNotice);
 const noticeObs=new MutationObserver(()=>{if(noticeBox.hidden){noticeObs.disconnect();closeNotice()}});
 noticeObs.observe(noticeBox,{attributes:true,attributeFilter:['hidden']});
+
+// 모바일: 입력 패널 접기/펼치기
+const foldBtn=document.getElementById('foldBtn');
+function isNarrow(){return matchMedia('(max-width:600px)').matches}
+function setFold(v){panel.classList.toggle('folded',v);foldBtn.textContent=v?'✏️ 글쓰기 · 설정':'▾ 접기';foldBtn.setAttribute('aria-expanded',String(!v))}
+foldBtn.addEventListener('click',()=>{const f=!panel.classList.contains('folded');setFold(f);if(!f&&!document.body.classList.contains('shared'))setTimeout(()=>txt.focus({preventScroll:true}),50)});
+let blurAt=0;txt.addEventListener('blur',()=>blurAt=performance.now());
+function keyboardJustClosed(){return performance.now()-blurAt<1500}
 
 resize();
 const start=async()=>{let t=null;try{t=await readShared()}catch(e){}

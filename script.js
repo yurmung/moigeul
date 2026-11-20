@@ -481,6 +481,20 @@ function enterShared(){document.body.classList.add('shared');startFrom.textConte
 document.getElementById('homeBtn').addEventListener('click',()=>{location.assign(location.href.split('#')[0])});
 panel.addEventListener('submit',e=>{if(document.body.classList.contains('shared'))e.stopImmediatePropagation()},true);
 
+// 첫 방문 공지: PC 환경 추천 (한 번 확인하면 이 브라우저에서는 다시 안 뜸)
+const noticeBox=document.getElementById('noticeBox');
+(function(){
+  let seen=false;try{seen=localStorage.getItem('moigeul-notice')==='1'}catch(e){}
+  if(seen)return;
+  const mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&Math.min(screen.width,screen.height)<820);
+  document.getElementById('noticeMobile').hidden=!mobile;
+  noticeBox.hidden=false;
+})();
+function closeNotice(){if(!noticeBox.hidden)noticeBox.hidden=true;try{localStorage.setItem('moigeul-notice','1')}catch(e){}}
+document.getElementById('noticeOk').addEventListener('click',closeNotice);
+const noticeObs=new MutationObserver(()=>{if(noticeBox.hidden){noticeObs.disconnect();closeNotice()}});
+noticeObs.observe(noticeBox,{attributes:true,attributeFilter:['hidden']});
+
 resize();
 const start=async()=>{let t=null;try{t=await readShared()}catch(e){}
   if(t)enterShared();
